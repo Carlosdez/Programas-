@@ -3,190 +3,54 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Generador QR Wi-Fi — Casas XVI Guest</title>
+  <title>QR Acceso Casas XVI Guest</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding: 20px; max-width:900px; margin:auto; color:#111; }
-    h1 { font-size:1.6rem; margin-bottom:0.2rem; }
-    p { margin-top: 0; color:#444; }
-    .card { border:1px solid #e6e6e6; padding:16px; border-radius:8px; box-shadow: 0 6px 18px rgba(20,20,20,0.03); margin-top:16px; }
-    label { display:block; margin-top:12px; font-weight:600; }
-    input[type=text], input[type=password], select { width:100%; padding:8px 10px; margin-top:6px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
-    .row { display:flex; gap:12px; margin-top:12px; }
-    button { padding:10px 14px; border-radius:8px; border:0; cursor:pointer; background:#2563eb; color:#fff; font-weight:600; }
-    button.secondary { background:#6b7280; }
-    #qrcode { margin-top:18px; display:flex; align-items:center; justify-content:center; padding:16px; background:#fff; border-radius:8px; }
-    small { color:#666; display:block; margin-top:6px; }
+    body { font-family: system-ui, Arial; padding:20px; max-width:900px; margin:auto; text-align:center; }
+    h1 { font-size:1.6rem; margin-bottom:0.5rem; }
+    .section { border:1px solid #ddd; border-radius:10px; padding:20px; margin-top:20px; }
+    #qrcodeWifi, #qrcodePortal { margin-top:14px; display:flex; justify-content:center; }
   </style>
 </head>
 <body>
-  <h1>Generador QR Wi-Fi — Casas XVI Guest</h1>
-  <p>Genera un QR para conectar dispositivos a la red Wi-Fi del hotel con los datos por defecto. Puedes editar antes de generar.</p>
+  <h1>Acceso Wi-Fi — Casas XVI Guest</h1>
+  <p>Escanea uno de los siguientes QR para conectarte:</p>
 
-  <div class="card">
-    <label>Tipo de red</label>
-    <select id="netType">
-      <option value="psk">WPA/WPA2 (PSK) — SSID + contraseña</option>
-      <option value="enterprise">WPA2-Enterprise (EAP) — usuario + contraseña</option>
-    </select>
-
-    <label>SSID (nombre de la red)</label>
-    <input type="text" id="ssid" value="Casas XVI Guest" />
-
-    <div id="pskFields">
-      <label>Contraseña</label>
-      <input type="password" id="password" value="12345" />
-      <small>Formato del QR: <code>WIFI:T:WPA;S:Casas XVI Guest;P:12345;;</code></small>
-    </div>
-
-    <div id="enterpriseFields" style="display:none;">
-      <label>Método EAP (opcional)</label>
-      <input type="text" id="eap" value="TTLS" />
-      <label>Identidad / Usuario</label>
-      <input type="text" id="username" value="casasxvi@2025" />
-      <label>Contraseña (EAP)</label>
-      <input type="password" id="entPassword" value="12345" />
-      <small>El soporte varia entre dispositivos; escanea y revisa la configuración que tu teléfono solicita.</small>
-    </div>
-
-    <div class="row">
-      <button id="generateBtn">Generar QR</button>
-      <button id="downloadBtn" class="secondary">Descargar PNG</button>
-    </div>
-
-    <div id="qrcode" class="card" style="margin-top:14px;">
-      <!-- Aquí se inserta el QR -->
-      <div id="qrcodeInner"></div>
-    </div>
-
-    <div style="margin-top:12px;">
-      <strong>Texto codificado (vista previa):</strong>
-      <pre id="payload" style="white-space:pre-wrap; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #eef2ff;"></pre>
-    </div>
+  <div class="section">
+    <h2>1️⃣ Conexión Wi-Fi Automática</h2>
+    <p>SSID: <b>Casas XVI Guest</b><br>
+       Usuario: <b>casasxvi@2025</b><br>
+       Contraseña: <b>12345</b></p>
+    <div id="qrcodeWifi"></div>
+    <small>El QR incluye la configuración de red con usuario y contraseña.<br>
+    Nota: no todos los teléfonos soportan WPA2-Enterprise por QR.</small>
   </div>
 
-  <!-- QRCode.js desde CDN (qrcodejs) -->
+  <div class="section">
+    <h2>2️⃣ Portal de Acceso</h2>
+    <p>Escanea para abrir la página de login:</p>
+    <div id="qrcodePortal"></div>
+    <p><a href="http://172.16.172.1">http://172.16.172.1</a></p>
+  </div>
+
+  <!-- Librería QRCode -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
-    // Elementos
-    const netType = document.getElementById('netType');
-    const pskFields = document.getElementById('pskFields');
-    const enterpriseFields = document.getElementById('enterpriseFields');
-    const generateBtn = document.getElementById('generateBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const qrcodeInner = document.getElementById('qrcodeInner');
-    const payloadPre = document.getElementById('payload');
+    // Generar QR para Wi-Fi WPA2 Enterprise
+    const wifiPayload = "WIFI:T:WPA2-EAP;S:Casas XVI Guest;E:TTLS;U:casasxvi@2025;P:12345;;";
+    new QRCode(document.getElementById("qrcodeWifi"), {
+      text: wifiPayload,
+      width: 220,
+      height: 220,
+      correctLevel: QRCode.CorrectLevel.H
+    });
 
-    // Valores por defecto
-    const ssidInput = document.getElementById('ssid');
-    const passwordInput = document.getElementById('password');
-    const usernameInput = document.getElementById('username');
-    const entPasswordInput = document.getElementById('entPassword');
-    const eapInput = document.getElementById('eap');
-
-    let qr; // instancia
-
-    function buildPSKPayload(ssid, pass) {
-      // Escapa caracteres especiales según formato WIFI: \,;:," etc. Reemplazamos \ y ; y , y :
-      function esc(s) {
-        return s.replace(/([\\;,:"])/g, '\\$1');
-      }
-      // T:WPA is common; leaving T empty lets scanner attempt auto (pero usaremos WPA)
-      return 'WIFI:T:WPA;S:' + esc(ssid) + ';P:' + esc(pass) + ';;';
-    }
-
-    function buildEnterprisePayload(ssid, eap, username, pass) {
-      // No hay un estándar único; esta es una variante extendida que algunos lectores entienden.
-      // Ejemplo: WIFI:T:WPA2-EAP;S:SSID;E:TTLS;U:usuario;P:pass;;
-      function esc(s) { return (s||'').replace(/([\\;,:"])/g, '\\$1'); }
-      return 'WIFI:T:WPA2-EAP;S:' + esc(ssid) + ';E:' + esc(eap) + ';U:' + esc(username) + ';P:' + esc(pass) + ';;';
-    }
-
-    function renderQR(text) {
-      // limpiar anterior
-      qrcodeInner.innerHTML = '';
-      // crear nuevo QR (tamaño 256)
-      qr = new QRCode(qrcodeInner, {
-        text: text,
-        width: 256,
-        height: 256,
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    }
-
-    function updateVisibility() {
-      if (netType.value === 'psk') {
-        pskFields.style.display = '';
-        enterpriseFields.style.display = 'none';
-      } else {
-        pskFields.style.display = 'none';
-        enterpriseFields.style.display = '';
-      }
-    }
-
-    // Generar al cargar (con valores por defecto)
-    function generate() {
-      const ssid = ssidInput.value.trim();
-      if (!ssid) { alert('El SSID no puede estar vacío.'); return; }
-
-      if (netType.value === 'psk') {
-        const pass = passwordInput.value;
-        const payload = buildPSKPayload(ssid, pass);
-        payloadPre.textContent = payload;
-        renderQR(payload);
-      } else {
-        const eap = eapInput.value || 'TTLS';
-        const user = usernameInput.value || '';
-        const pass = entPasswordInput.value || '';
-        const payload = buildEnterprisePayload(ssid, eap, user, pass);
-        payloadPre.textContent = payload;
-        renderQR(payload);
-      }
-    }
-
-    // Descargar PNG del QR
-    function downloadPNG() {
-      // buscar el <img> o canvas que QRCode.js generó
-      // qrcodeInner puede contener <img> o <canvas> según implementación. Intentamos extraer imagen.
-      let img = qrcodeInner.querySelector('img');
-      if (img) {
-        // crear canvas para forzar fondo blanco
-        const canvas = document.createElement('canvas');
-        const size = img.naturalWidth || 256;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        // fondo blanco
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0,0,size,size);
-        ctx.drawImage(img,0,0);
-        const dataUrl = canvas.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = 'qr-casasxvi.png';
-        a.click();
-        return;
-      }
-      // si no hay img, puede haber canvas
-      let c = qrcodeInner.querySelector('canvas');
-      if (c) {
-        const a = document.createElement('a');
-        a.href = c.toDataURL('image/png');
-        a.download = 'qr-casasxvi.png';
-        a.click();
-        return;
-      }
-
-      alert('No se encontró la imagen del QR para descargar. Genera el QR primero.');
-    }
-
-    // Eventos
-    netType.addEventListener('change', () => { updateVisibility(); });
-    generateBtn.addEventListener('click', generate);
-    downloadBtn.addEventListener('click', downloadPNG);
-
-    // Generar al inicio
-    updateVisibility();
-    generate();
+    // Generar QR para portal de login
+    new QRCode(document.getElementById("qrcodePortal"), {
+      text: "http://172.16.172.1",
+      width: 220,
+      height: 220,
+      correctLevel: QRCode.CorrectLevel.H
+    });
   </script>
 </body>
 </html>
